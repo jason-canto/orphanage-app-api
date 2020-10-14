@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,39 +33,38 @@ public class OrphanageController {
 	private ValidationService validation;
 
 	@PostMapping
-	public ResponseEntity<?> create(@Valid @RequestBody Orphanage orphanage,
-			@RequestParam("images") MultipartFile[] images, BindingResult result) {
+	public ResponseEntity<?> create(@Valid Orphanage orphanage,
+			@RequestParam("files") MultipartFile[] files, BindingResult result) {
 		Map<String, String> errors = validation.validate(result);
 		if (errors != null) {
 			return new ResponseEntity<Map<String, String>>(errors, HttpStatus.BAD_REQUEST);
 		}
-
-		Orphanage saved = repository.save(orphanage);
+		Orphanage saved = service.save(orphanage, files);
 		return new ResponseEntity<Orphanage>(saved, HttpStatus.CREATED);
 	}
 
 	@GetMapping
 	public ResponseEntity<List<Orphanage>> findAll() {
-		List<Orphanage> orphanages = repository.findAll();
+		List<Orphanage> orphanages = service.findAll();
 		return new ResponseEntity<>(orphanages, HttpStatus.OK);
 	}
 
 	@GetMapping("/{orphanageId}")
 	public ResponseEntity<Orphanage> findById(@PathVariable String orphanageId) {
-		return repository.findById(orphanageId)
+		return service.findById(orphanageId)
 				.map(result -> new ResponseEntity<>(result, HttpStatus.OK))
 				.orElse(new ResponseEntity<>(HttpStatus.NO_CONTENT));
 	}
 
 	@GetMapping("/search")
 	public ResponseEntity<List<Orphanage>> findByName(@RequestParam String name) {
-		List<Orphanage> result = repository.findByName(name);
+		List<Orphanage> result = service.findByName(name);
 		return new ResponseEntity<>(result, HttpStatus.OK);
 	}
 
 	@DeleteMapping("/{orphanageId}")
 	public ResponseEntity<Void> deleteProject(@PathVariable String orphanageId) {
-		repository.deleteById(orphanageId);
+		service.delete(orphanageId);
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 	}
 }
